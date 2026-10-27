@@ -1,0 +1,573 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>BeatRush | Musical Rhythm Game</title>
+    <style>
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #0b0c10;
+        color: white;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        touch-action: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        overscroll-behavior: none;
+      }
+
+      .game {
+        width: 100%;
+        max-width: 600px;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 48px;
+        margin-bottom: 5px;
+        letter-spacing: 5px;
+        color: #45f3ff;
+        text-shadow: 0 0 20px #45f3ff;
+        text-transform: uppercase;
+      }
+
+      .subtitle { color: #8a8d9e; margin-bottom: 25px; letter-spacing: 1px; }
+
+      .stats {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .stat {
+        flex: 1;
+        padding: 15px 5px;
+        border: 2px solid #1f2833;
+        background: #12151c;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      }
+
+      .stat span {
+        display: block;
+        color: #66fcf1;
+        font-size: 13px;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+
+      .stat strong { font-size: 26px; }
+
+      #message {
+        height: 30px;
+        color: #ff007f;
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        text-shadow: 0 0 10px #ff007f;
+      }
+
+      .board {
+        height: 420px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        position: relative;
+        overflow: hidden;
+        border: 2px solid #1f2833;
+        border-radius: 15px;
+        background: #0d1017;
+        box-shadow: 0 0 30px rgba(69, 243, 255, 0.1);
+        touch-action: none;
+      }
+      
+
+
+      .lane {
+        position: relative;
+        border-right: 1px solid #1f2833;
+        background: linear-gradient(to bottom, #0d1017, #151a24);
+      }
+
+      .lane:last-child { border-right: none; }
+
+
+      .key {
+        position: absolute;
+        top: 330px;
+        left: 10%;
+        width: 80%;
+        height: 80px;
+        text-align: center;
+        line-height: 80px;
+        border: 3px solid rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        font-size: 32px;
+        font-weight: bold;
+        color: white;
+        transition: 0.1s;
+      }
+
+      /* Note Colors */
+      .note {
+        position: absolute;
+        left: 10%;
+        width: 80%;
+        height: 25px;
+        border-radius: 10px;
+      }
+
+      .lane:nth-child(1) .note { background: #ff007f; box-shadow: 0 0 15px #ff007f; }
+      .lane:nth-child(2) .note { background: #45f3ff; box-shadow: 0 0 15px #45f3ff; }
+      .lane:nth-child(3) .note { background: #b145ff; box-shadow: 0 0 15px #b145ff; }
+      .lane:nth-child(4) .note { background: #ffea00; box-shadow: 0 0 15px #ffea00; }
+
+      /* Key Press Glow Effect */
+      .lane:nth-child(1) .key.active { border-color: #ff007f; color: #ff007f; box-shadow: 0 0 15px #ff007f; }
+      .lane:nth-child(2) .key.active { border-color: #45f3ff; color: #45f3ff; box-shadow: 0 0 15px #45f3ff; }
+      .lane:nth-child(3) .key.active { border-color: #b145ff; color: #b145ff; box-shadow: 0 0 15px #b145ff; }
+      .lane:nth-child(4) .key.active { border-color: #ffea00; color: #ffea00; box-shadow: 0 0 15px #ffea00; }
+      
+
+      button {
+        margin-top: 25px;
+        padding: 15px 35px;
+        border: none;
+        border-radius: 10px;
+        background: #45f3ff;
+        color: #0b0c10;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        box-shadow: 0 0 20px rgba(69, 243, 255, 0.4);
+        transition: 0.2s;
+      }
+
+      button:hover { background: white; box-shadow: 0 0 30px white; }
+
+      .help {
+        margin-top: 20px;
+        color: #8a8d9e;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      @media (max-width: 600px) {
+        body {
+          touch-action: none;
+          overflow: hidden;
+        }
+        .keys {
+          height: 100px;
+        }
+        .key {
+          font-size: 28px;
+          height: 100%;
+        }
+      }
+      #ui-overlay {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; /*Lets clicks pass through when empty */
+        display: flex; justify-content: center; align-items: center;
+        z-index: 100;
+      }
+      .screen {
+        background: rgba(11, 12, 16, 0.95);
+        padding: 30px;
+        border: 2px solid #45f3ff;
+        border-radius: 15px;
+        text-align: center;
+        pointer-events: auto; /* Re-enables clicks for the menu */
+      }
+      .screen h2 { margin-top: 0; color: #45f3ff; }
+      .screen h1 { font-size: 80px; color: #ff007f; margin: 0; }
+
+      .judgement {
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        bottom: 120px;
+        font-size: 24px;
+        font-weight: bold;
+        text-shadow: 0 0 15px currentColor;
+        pointer-events: none;
+        z-index: 50;
+        animation: floatUp 0.5s ease-out forwards;
+      }
+      @keyframes floatUp { 
+        0% { opacity: 1; bottom: 120px; }
+        100% { opacity: 0; bottom: 180px; }
+      }
+      </style>
+      </head>
+      <body>
+        <main class="game">
+          <h1>BEATRUSH</h1>
+          <div class="subtitle">create the melody. Hit the beat.</div>
+
+          <section class="stats">
+            <div class="stat"><span>SCORE</span><strong id="score">0</strong></div>
+            <div class="stat"><span>LIVES</span><strong id="lives">❤❤❤</strong></div>
+            <div class="stat"><span>BEST</span><strong id="best">0</strong></div>
+            </section>
+
+
+            <section class="board" id="board">
+              <div class="lane"><div class="target"></div><div class="key" id="key-d">D</div></div>
+              <div class="lane"><div class="target"></div><div class="key" id="key-f">F</div></div>
+              <div class="lane"><div class="target"></div><div class="key" id="key-j">J</div></div>
+              <div class="lane"><div class="target"></div><div class="key" id="key-k">K</div></div>
+              </section>
+
+              <div id="ui-overlay">
+                <div id="start-screen" class="screen">
+                  <h2>HOW TO PLAY</h2>
+                  <p>Tap D, F, J, F, K on the beat.</p>
+                  <p>3 Misses = Game Over!</p>
+                  <button id="start-btn">START GAME</button>
+                  </div>
+
+                  <div id="countdown-screen" class="screen" style="display: none;">
+                    <h1 id="countdown-text">3</h1>
+                    </div>
+
+                    <div id="game-over-screen" class="screen" style="display: none;">
+                      <h2>GAME OVER</h2>
+                      <p>Score: <span id="final-score">0</span></p>
+                      <button id="restart-btn">TRY AGAIN</button>
+                      </div>
+
+                      <div id="pause-screen" class="screen" style="display: none;">
+                        <h2>PAUSED</h2>
+                        <p>Click or tap anywhere to resume</p>
+                        </div>
+                        </div>
+                        
+
+            
+                </main>
+
+                <script>
+                  // Audio Setup - This makes the game act like a synthesizer
+                  let audioCtx =null;
+             
+                  function initAudio() {
+                    if (!audioCtx) {
+                      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    if (audioCtx.state === 'suspended') {
+                      audioCtx.resume();
+                    }
+                  }
+
+                  // Pentatonic scale (C4, Eb4, G4, Bb4) - Always sounds good together!
+                  const noteFrequencies = [261.63, 311.13, 392.00, 466.16];
+
+                  function playSound(type, laneIndex = 0) {
+                    if (!audioCtx) return;
+                    const osc = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    
+                    osc.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+
+                    if (type === 'hit') {
+                      osc.type = 'triangle'; // Smooth synth sound
+                      osc.frequency.setValueAtTime(noteFrequencies[laneIndex], audioCtx.currentTime);
+                      // Quick volume fade out for a punchy beat 
+                      gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                      osc.start();
+                      osc.stop(audioCtx.currentTime + 0.3);
+                    } else if (type ==='miss') {
+                      osc.type = 'sawtooth'; // Harsh sound for a mistake 
+                      osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+                      osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.2);
+                      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                      gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                      osc.start();
+                      osc.stop(audioCtx.currentTime + 0.2);
+                    }
+                    else if (type ==='milestone') {
+                    osc.type = 'sine'; // Creates a smooth, pleasent chime
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1200,audioCtx.currentTime + 0.3);
+                    gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.5);
+                  }
+                } // <--- Add this one to close the playSound function!
+
+                  //Game Logic
+                  const lanes = [...document.querySelectorAll(".lane")];
+                  const scoreText = document.getElementById("score");
+                  // Mary Had a little lamb pattern (0=far left, 3=far right)
+                  const beatMap = [2, 1, 0, 1, 2, 2, 2, 1, 1, 1, 2, 3, 3];
+                  let patternIndex = 0; //Tracks which note we are on
+                  const livesText = document.getElementById("lives");
+                  const bestText = document.getElementById("best");
+                  const startScreen = document.getElementById("start-screen");
+                  const countdownScreen = document.getElementById("countdown-screen");
+                  const gameOverScreen = document.getElementById("game-over-screen");
+                  const pauseScreen = document.getElementById("pause-screen");
+                  const startBtn = document.getElementById("start-btn");
+                  const restartBtn = document.getElementById("restart-btn");
+                  const countdownText = document.getElementById("countdown-text");
+                  const finalScoreText = document.getElementById("final-score"); 
+                  
+
+                  const keys = ["d", "f", "j", "k"];
+                  const keyElements = [
+                    document.getElementById("key-d"),
+                    document.getElementById("key-f"),
+                    document.getElementById("key-j"),
+                    document.getElementById("key-k")
+                ];
+
+                const notes = [];
+                let running = false;
+                let score = 0, best = 0, misses = 0;
+                let lastSpawn = 0, lastFrame = 0, animationId = null;
+
+                let speed = 150;
+                const hitPosition = 370; // Bottom of the board
+                const hitWindow = 80; // How forgiving the timing is
+
+                function spawnNote() {
+                  // Read the next note from our song chart instead of being random
+                  const laneIndex = beatMap[patternIndex];
+
+                  // Move to the next note for next time, and loop back if the song finishes
+                  patternIndex++;
+                  if (patternIndex >= beatMap.length) {
+                    patternIndex = 0;
+                  }
+                  const element = document.createElement("div");
+                  element.className = "note";
+                  element.style.top = "-30px";
+                  lanes[laneIndex].appendChild(element);
+
+                  notes.push({ lane: laneIndex, y: -30, element: element, hit: false });
+                  }
+                  function startCountdown() {
+                    startScreen.style.display = "none";
+                    gameOverScreen.style.display = "none";
+                    countdownScreen.style.display = "flex";
+
+                    let count = 3;
+                    countdownText.textContent = count;
+
+                    let interval = setInterval(() => {
+                      count--;
+                      if (count > 0) {
+                        countdownText.textContent = count;
+                      } else if (count === 0) {
+                        countdownText.textContent = "GO!";
+                      } else {
+                        clearInterval(interval);
+                        countdownScreen.style.display = "none";
+                        startGame(); //This launches your game!
+                      }
+                    }, 1000);
+                  }
+
+                  function showJudgement(text, color, laneIndex) {
+                    const popup = document.createElement("div");
+                    popup.textContent = text;
+                    popup.className = "judgement";
+                    popup.style.color = color;
+                    lanes[laneIndex].appendChild(popup);
+
+                    setTimeout(() => popup.remove(), 500); //Cleans up the HTML after fading
+                  }
+                  function startGame() {
+                    initAudio(); // Starts the sound engine
+                    if (animationId !== null) cancelAnimationFrame(animationId);
+
+                    notes.forEach(note => note.element.remove());
+                    notes.length = 0;
+                    score = 0; lastSpawn = 0; lastFrame = 0; misses = 0; patternIndex = 0;
+                    speed = 150;
+                    running = true;
+
+                    scoreText.textContent = score;
+                    livesText.textContent ="❤❤❤";
+                    
+
+                    animationId = requestAnimationFrame(gameLoop);
+                  }
+
+                  function gameLoop(timestamp) {
+                    if (!running) return;
+                    const delta = lastFrame ? Math.min((timestamp - lastFrame) / 1000, 0.05) : 0;
+                    lastFrame = timestamp;
+                    lastSpawn += delta;
+
+                    // Shrinks the spawn delay as speed increases to keep rhythm tight
+                    let spawnInterval = (150 / speed) * 0.6;
+                    if (lastSpawn >= spawnInterval) {
+                      spawnNote();
+                      lastSpawn = 0;
+                    }
+
+                    for (let i = notes.length - 1; i >= 0; i--) {
+                      const note = notes[i];
+                      note.y += speed * delta;
+                      note.element.style.top = note.y + "px";
+
+                      if (note.y > hitPosition + hitWindow) {
+                        note.element.remove();
+                        notes.splice(i, 1);
+                        playSound('miss'); // Play bad sound
+                        misses++;
+                        showJudgement("MISS!", "#ff007f", note.lane);
+
+                        if (misses === 1) livesText.textContent = "❤❤🖤";
+                        if (misses === 2) livesText.textContent = "❤🖤🖤";
+
+                        if (misses >= 3) {
+                          livesText.textContent ="🖤🖤🖤";
+                          running = false;
+                          finalScoreText.textContent = score;
+                          gameOverScreen.style.display = "flex";
+                          return;
+                        }
+                      }
+                    }
+                    animationId = requestAnimationFrame(gameLoop);
+                  }
+
+                  function hitLane(laneIndex) {
+                    if (!running) return;
+
+                    // Make the key light up when pressed
+                    keyElements[laneIndex].classList.add("active");
+                    setTimeout(() => keyElements[laneIndex].classList.remove("active"), 150);
+
+                    let closest = null;
+                    let closestDistance = Infinity;
+
+                    for (const note of notes) {
+                      if (note.lane !== laneIndex || note.hit) continue;
+                      const distance = Math.abs(note.y - hitPosition);
+                      if (distance < closestDistance) {
+                        closest = note;
+                        closestDistance = distance;
+                      }
+                    }
+
+                    if (closest && closestDistance <= hitWindow) {
+                      closest.hit = true;
+                      closest.element.remove();
+                      notes.splice(notes.indexOf(closest), 1);
+
+                    
+                      score += 10;
+                      best = Math.max(best, score);
+                      showJudgement("PERFECT!", "#45f3ff", laneIndex);
+                      // Level up speed every 100 points, capping at 1000 max!
+                      if (score > 0 && score % 100 === 0 && score <= 1000) {
+                        speed += 12; // Jumps up by 12 speed each time
+                        playSound('milestone'); // Triggers your new level-up sound!
+                      }
+
+                      scoreText.textContent = score;
+                      bestText.textContent = best;
+
+                      playSound('hit', laneIndex); // Play the musical note!
+                    } else {
+                      playSound('miss');
+                      misses++;
+                      showJudgement("MISS!", "#ff007f", laneIndex);
+
+                      if (misses === 1) livesText.textContent ="❤❤🖤";
+                      if (misses === 2) livesText.textContent ="❤🖤🖤";
+
+                      if (misses >=3) {
+                        livesText.textContent = "🖤🖤🖤";
+                        running = false;
+                        finalScoreText.textContent = score;
+                        gameOverScreen.style.display = "flex";
+                        return;
+                    }
+                  }
+                }
+                  document.addEventListener("keydown", event => {
+                    const key = event.key.toLowerCase();
+                    const laneIndex = keys.indexOf(key);
+                    if (laneIndex !== -1 && !event.repeat) {
+                      hitLane(laneIndex);
+                    }
+                  });
+
+                  startBtn.addEventListener("click", startCountdown);
+                  restartBtn.addEventListener("click", startCountdown);
+                  
+
+                  // 1. Kill pinch-to-zoom and swiping everywhere
+                  document.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false});
+
+                  // 2. Kill zoom and make the entire column a massive touch target
+                  document.querySelectorAll(".lane").forEach((lane, index) => {
+                    lane.addEventListener("touchstart", (e) => {
+                        e.preventDefault();
+                        if (running) hitLane(index); // Register a hit anywhere in the column!
+                    }, { passive: false });
+                  });
+                  // Auto-pause when switching tabs or locking the phone 
+                  document.addEventListener("visibilitychange", () => {
+                    if (document.hidden && running) {
+                      running = false;
+                      pauseScreen.style.display = "flex";
+                      if (audioCtx) audioCtx.suspend(); //pause the audio engine
+                    }
+                  });
+
+                  // Resume when clicking the pause screen 
+                  pauseScreen.addEventListener("click", () => {
+                    pauseScreen.style.display = "none";
+                    running = true;
+                    lastFrame = 0; // Prevents notes from teleporting after a pause 
+                    if (audioCtx) audioCtx.resume();
+                    requestAnimationFrame(gameLoop); // Restart the visual loop
+                  });
+                  </script>
+                  </body>
+                  </html>
+
+
+                
+
+
+
+
+
+                    
+
+                
+
+            
+
+
+
+        
+
+
+
+    
+
+      
+
+
